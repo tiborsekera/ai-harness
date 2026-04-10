@@ -2,31 +2,23 @@
 
 ## Project Overview
 
-AI Harness is a repository for exploring and testing AI coding agent setup patterns, including GitHub Copilot configuration, harness engineering practices, and agent instruction structures.
+AI Harness is a reference implementation for AI coding agent setup patterns, capturing harness engineering practices from OpenAI's Codex approach and GitHub Copilot configuration best practices.
 
-## Purpose
+## Deep References
 
-This repo serves as a reference implementation for:
-- GitHub Copilot coding agent configuration
-- Path-specific instruction files (`.github/instructions/`)
-- Environment setup workflows (`copilot-setup-steps.yml`)
-- Harness engineering patterns from OpenAI's Codex approach
+| Topic | Location |
+|-------|----------|
+| Harness engineering principles | `docs/harness-engineering.md` |
+| Copilot setup guide & checklist | `docs/copilot-setup-guide.md` |
 
-## Structure
+## Key Concepts
 
-```
-.github/
-  copilot-instructions.md          # This file - main agent instructions
-  instructions/                    # Path-specific instruction files
-  workflows/
-    copilot-setup-steps.yml        # Agent environment setup
-```
-
-## Development
-
-- This is a configuration/reference repository
-- Changes should focus on instruction quality and agent setup patterns
-- Test changes by assigning issues to Copilot coding agent
+1. **AGENTS.md / copilot-instructions.md as table of contents** - Keep concise, point to `docs/`
+2. **Structured `docs/` as system of record** - Architecture, conventions, contributing docs
+3. **Path-specific instructions** - `.github/instructions/*.instructions.md` with `applyTo` globs
+4. **copilot-setup-steps.yml** - Environment setup with baseline verification and remediation messages
+5. **Dependency layers** - Enforce with structural tests and linters
+6. **Golden principles** - Opinionated mechanical rules encoded in the repo
 
 ## Note
 
