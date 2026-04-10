@@ -1,0 +1,121 @@
+name: "Copilot Setup Steps"
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/copilot-setup-steps.yml"
+  pull_request:
+    paths:
+      - ".github/workflows/copilot-setup-steps.yml"
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      - name: Install Python dependencies for agent skills
+        run: |
+          pip install pydantic
+
+      - name: Verify skill helper scripts
+        run: |
+          python -c "import pydantic; print(f'pydantic {pydantic.__version__} installed')"
+          python -c "
+          import ast, sys
+          scripts = [
+              '.github/skills/log-extraction/execute_remote_log_search.py',
+              '.github/skills/remote-experiment-execution/execute_structured_command.py',
+              '.github/skills/remote-experiment-execution/execute_long_command.py',
+          ]
+          for script in scripts:
+              try:
+                  with open(script) as f:
+                      ast.parse(f.read())
+                  print(f'  {script}: syntax OK')
+              except SyntaxError as e:
+                  print(f'  {script}: SYNTAX ERROR - {e}')
+                  sys.exit(1)
+          "
+
+      - name: Validate agent file frontmatter
+        run: |
+          python -c "
+          import glob, sys, re
+
+          errors = []
+          required_fields = ['name', 'description', 'tools']
+
+          for path in sorted(glob.glob('.github/agents/*.agent.md')):
+              with open(path) as f:
+                  content = f.read()
+
+              # Check frontmatter exists
+              if not content.startswith('---'):
+                  errors.append(f'{path}: missing YAML frontmatter')
+                  continue
+
+              # Extract frontmatter
+              parts = content.split('---', 2)
+              if len(parts) < 3:
+                  errors.append(f'{path}: malformed YAML frontmatter')
+                  continue
+
+              fm = parts[1]
+              for field in required_fields:
+                  if f'{field}:' not in fm:
+                      errors.append(f'{path}: missing required field \"{field}\"')
+
+              # Check name matches filename
+              name_match = re.search(r'^name:\s*(.+)$', fm, re.MULTILINE)
+              if name_match:
+                  name = name_match.group(1).strip()
+                  expected = path.split('/')[-1].replace('.agent.md', '')
+                  if name != expected:
+                      errors.append(f'{path}: name \"{name}\" does not match filename \"{expected}\"')
+
+          if errors:
+              for e in errors:
+                  print(f'  ERROR: {e}')
+              sys.exit(1)
+          else:
+              print(f'  All agent files validated successfully')
+          "
+
+      - name: Validate skill file frontmatter
+        run: |
+          python -c "
+          import glob, sys
+
+          errors = []
+          for path in sorted(glob.glob('.github/skills/*/SKILL.md')):
+              with open(path) as f:
+                  content = f.read()
+
+              if not content.startswith('---'):
+                  errors.append(f'{path}: missing YAML frontmatter')
+                  continue
+
+              parts = content.split('---', 2)
+              if len(parts) < 3:
+                  errors.append(f'{path}: malformed YAML frontmatter')
+                  continue
+
+              fm = parts[1]
+              for field in ['name', 'description']:
+                  if f'{field}:' not in fm:
+                      errors.append(f'{path}: missing required field \"{field}\"')
+
+          if errors:
+              for e in errors:
+                  print(f'  ERROR: {e}')
+              sys.exit(1)
+          else:
+              print(f'  All skill files validated successfully')
+          "
